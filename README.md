@@ -1,6 +1,6 @@
-*This project was developed for the **Introduction to Artificial Intelligence** course (A.Y. 2025/2026) at the University of Perugia.*
+> *This project was developed for the **Introduction to Artificial Intelligence** course (A.Y. 2025/2026) at the University of Perugia.*
 
----
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/francescopausellii/uniform-coloring-ai/blob/main/notebooks/main.ipynb)
 
 **Uniform Coloring** is a problem domain consisting of a rectangular grid of cells. Each cell has an initial color, and an agent (represented by a "coloring head" **T**) moves through the grid to achieve a specific goal.
 
