@@ -30,15 +30,20 @@ The problem is modeled as a **state-space search** problem by extending the `Pro
 Once a solution (a sequence of actions) is found, the system generates a visual simulation showing the agent moving and coloring the cells until the uniform goal is reached.
 
 ## Example
-**Initial State:**
-```
-G T G B
-G Y G B
-```
-**Goal State (Uniform Green):**
-```
-G T G G
-G G G G
+```mermaid
+flowchart LR
+
+subgraph Initial["Initial State"]
+A["G T G B
+G Y G B"]
+end
+
+subgraph Goal["Goal State (Uniform Green)"]
+B["G T G G
+G G G G"]
+end
+
+A --> B
 ```
 **Possible Solution:** `Sud, col-G, East, East, col-G, Nord, col-G, West, West` 
 - **Cost:** 15 
