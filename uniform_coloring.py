@@ -69,7 +69,7 @@ class UniformColoring(Problem):
             if 0 <= new_r < self.rows and 0 <= new_c < self.cols:
                 possible_actions.append(move)
 
-        # 2. Actions for coloring (col-B, col-Y, col-G)
+        # 2. Actions for coloring the current cell with a color (B, Y, G)
         # It makes sense to color only if the cell has a different color from the one we want to apply
         current_color = grid[r][c]
         for color in [Color.BLUE, Color.YELLOW, Color.GREEN]:
