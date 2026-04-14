@@ -6,7 +6,7 @@ class Color(Enum):
     BLUE = ('B', 1)
     YELLOW = ('Y', 2)
     GREEN = ('G', 3)
-    EMPTY = ('U', 0)  # Placeholder for the initial position of the head (T)
+    EMPTY = ('T', 0)  # Placeholder for the initial position of the head (T)
 
     def __init__(self, symbol, cost):
         self.symbol = symbol
@@ -45,7 +45,7 @@ class UniformColoring(Problem):
                 char = grid_matrix[r][c]
                 if grid_matrix[r][c] == 'T':
                     self.start_pos = (r, c)
-                    # 'U' = Uncolored (starting position is not colored)
+                    # 'T' = Uncolored (starting position is not colored)
                     row_colors.append(Color.EMPTY)
                 else:
                     row_colors.append(symbol_to_color[char])
@@ -96,7 +96,7 @@ class UniformColoring(Problem):
             # Reconvert the grid to an immutable structure (tuple of tuples) for the new state
             return (tuple(tuple(row) for row in new_grid), pos)
 
-    def path_cost(self, c, action):
+    def path_cost(self, c, state1, action, state2):
         """Return the cost of the path c + the cost of the action."""
         if isinstance(action, Move):
             return c + 1
