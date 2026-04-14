@@ -12,6 +12,12 @@ class Color(Enum):
         self.symbol = symbol
         self.cost = cost
 
+    # This allows to compare colors based on their cost (which is useful for UCS)
+    def __lt__(self, other):
+        if isinstance(other, Color):
+            return self.cost < other.cost
+        return NotImplemented
+
 
 class Move(Enum):
     NORTH = (-1, 0)
