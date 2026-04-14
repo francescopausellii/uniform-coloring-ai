@@ -135,3 +135,27 @@ class UniformColoring(Problem):
                     return False
         # If there is only one color in the grid, we have a uniform coloring, otherwise we do not
         return True
+
+    def h(self, node):
+        """
+        Heuristic: h(n). Estimate of the cost to reach the goal from node n.
+        We want to optimize the TOTAL COST, so we consider both:
+        1. The distance to return to the starting position (if we are not already there)
+        2. The number of cells that still need to be colored correctly (multiplied by the cost of coloring with Blue, which is the cheapest color)
+        """
+        grid, pos = node.state
+
+        # 1. Manhattan Distance to return to the starting position (if we are not already there)
+        # Formula: |x1 - x2| + |y1 - y2|
+        return_distance = abs(pos[0] - self.start_pos[0]) + \
+            abs(pos[1] - self.start_pos[1])
+
+        # 2. Calculation of cells that are not yet correctly colored
+        # Transform the grid into a flat list for counting
+        flat_grid = [cell for row in grid for cell in row]
+
+        # If the head is 'EMPTY' (T), that cell still needs to be colored
+        cells_to_color = sum(1 for cell in flat_grid if cell == Color.EMPTY)
+
+        # Multiply by 1 (the cost of Blue) to be admissible
+        return return_distance + (cells_to_color * 1)
