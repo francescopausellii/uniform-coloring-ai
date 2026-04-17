@@ -26,6 +26,23 @@ class Move(Enum):
     WEST = (0, -1)
 
 
+class State:
+    def __init__(self, grid, pos):
+        self.grid = grid
+        self.pos = pos
+        symbols = ','.join(cell.symbol for row in grid for cell in row)
+        self.id = f"{pos[0]},{pos[1]}:{symbols}"
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+
 class UniformColoring(Problem):
     def __init__(self, grid_matrix):
         """
@@ -57,14 +74,14 @@ class UniformColoring(Problem):
                     row_colors.append(symbol_to_color[char])
             initial_grid.append(tuple(row_colors))
 
-        # The state must be immutable: (colored_grid, head_position)
-        initial_state = (tuple(initial_grid), self.start_pos)
+        # The state is a State object with immutable grid and position
+        initial_state = State(tuple(initial_grid), self.start_pos)
 
         super().__init__(initial_state)
 
     def actions(self, state):
         """Return the legal actions in a given state."""
-        grid, pos = state
+        grid, pos = state.grid, state.pos
         r, c = pos
         possible_actions = []
 
@@ -86,13 +103,12 @@ class UniformColoring(Problem):
 
     def result(self, state, action):
         """Return the resulting state from executing a given action."""
-        grid, pos = state
-        r, c = pos
+        grid, pos = state.grid, state.pos
 
         # Resolution of movements
         if isinstance(action, Move):
             dr, dc = action.value
-            return (grid, (pos[0] + dr, pos[1] + dc))
+            return State(grid, (pos[0] + dr, pos[1] + dc))
 
         # Resolution of coloring
         if isinstance(action, Color):
@@ -100,7 +116,7 @@ class UniformColoring(Problem):
             new_grid = [list(row) for row in grid]
             new_grid[pos[0]][pos[1]] = action
             # Reconvert the grid to an immutable structure (tuple of tuples) for the new state
-            return (tuple(tuple(row) for row in new_grid), pos)
+            return State(tuple(tuple(row) for row in new_grid), pos)
 
     def path_cost(self, c, state1, action, state2):
         """Return the cost of the path c + the cost of the action."""
@@ -108,11 +124,11 @@ class UniformColoring(Problem):
             return c + 1
         if isinstance(action, Color):
             return c + action.cost
-        return c
+        return c  # pragma: no cover
 
     def goal_test(self, state):
         """Return True if the current state is a goal state."""
-        grid, pos = state
+        grid, pos = state.grid, state.pos
 
         # 1. The head must be in its starting position
         if pos != self.start_pos:
@@ -138,24 +154,32 @@ class UniformColoring(Problem):
 
     def h(self, node):
         """
-        Heuristic: h(n). Estimate of the cost to reach the goal from node n.
-        We want to optimize the TOTAL COST, so we consider both:
-        1. The distance to return to the starting position (if we are not already there)
-        2. The number of cells that still need to be colored correctly (multiplied by the cost of coloring with Blue, which is the cheapest color)
+        Admissible heuristic: h(n) estimates cost to reach goal.
+        Combines: (1) distance to return to start, (2) cost to color uncolored cells,
+        (3) cost to make all cells uniform.
         """
-        grid, pos = node.state
+        grid, pos = node.state.grid, node.state.pos
 
-        # 1. Manhattan Distance to return to the starting position (if we are not already there)
-        # Formula: |x1 - x2| + |y1 - y2|
+        # 1. Manhattan distance to return to starting position
         return_distance = abs(pos[0] - self.start_pos[0]) + \
             abs(pos[1] - self.start_pos[1])
 
-        # 2. Calculation of cells that are not yet correctly colored
-        # Transform the grid into a flat list for counting
-        flat_grid = [cell for row in grid for cell in row]
+        # 2. Cost to color all EMPTY cells (use Blue's cost = 1, the minimum)
+        empty_count = sum(1 for row in grid for cell in row if cell == Color.EMPTY)
+        empty_cost = empty_count * Color.BLUE.cost
 
-        # If the head is 'EMPTY' (T), that cell still needs to be colored
-        cells_to_color = sum(1 for cell in flat_grid if cell == Color.EMPTY)
+        # 3. Cost to achieve uniform coloring among non-empty cells
+        # Find the most frequent color (likely target for all cells)
+        non_empty = [cell for row in grid for cell in row if cell != Color.EMPTY]
+        if non_empty:
+            from collections import Counter
+            color_counts = Counter(non_empty)
+            most_common_count = color_counts.most_common(1)[0][1]
+            # Cells that don't match most common color must be recolored
+            mismatch_count = len(non_empty) - most_common_count
+            # Admissible estimate: recolor each mismatch at minimum cost (Blue = 1)
+            recolor_cost = mismatch_count * Color.BLUE.cost
+        else:
+            recolor_cost = 0
 
-        # Multiply by 1 (the cost of Blue) to be admissible
-        return return_distance + (cells_to_color * 1)
+        return return_distance + empty_cost + recolor_cost
