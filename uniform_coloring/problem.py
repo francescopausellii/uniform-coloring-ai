@@ -74,6 +74,15 @@ class UniformColoring(Problem):
                     row_colors.append(symbol_to_color[char])
             initial_grid.append(tuple(row_colors))
 
+        # Determine optimal target color (minimizes total recoloring cost)
+        non_start = [(r, c) for r in range(self.rows) for c in range(self.cols)
+                     if (r, c) != self.start_pos]
+        self.target_color = min(
+            [Color.BLUE, Color.YELLOW, Color.GREEN],
+            key=lambda tc: sum(tc.cost for r, c in non_start
+                               if initial_grid[r][c] != tc)
+        )
+
         # The state is a State object with immutable grid and position
         initial_state = State(tuple(initial_grid), self.start_pos)
 
@@ -92,12 +101,10 @@ class UniformColoring(Problem):
             if 0 <= new_r < self.rows and 0 <= new_c < self.cols:
                 possible_actions.append(move)
 
-        # 2. Actions for coloring the current cell with a color (B, Y, G)
-        # It makes sense to color only if the cell has a different color from the one we want to apply
-        current_color = grid[r][c]
-        for color in [Color.BLUE, Color.YELLOW, Color.GREEN]:
-            if current_color != color:
-                possible_actions.append(color)
+        # 2. Color current cell with target color only (if it needs recoloring)
+        # Skips start_pos (EMPTY cell ignored in goal_test) and already-correct cells
+        if (r, c) != self.start_pos and grid[r][c] != self.target_color:
+            possible_actions.append(self.target_color)
 
         return possible_actions
 
@@ -154,32 +161,26 @@ class UniformColoring(Problem):
 
     def h(self, node):
         """
-        Admissible heuristic: h(n) estimates cost to reach goal.
-        Combines: (1) distance to return to start, (2) cost to color uncolored cells,
-        (3) cost to make all cells uniform.
+        Admissible heuristic: estimates minimum cost to reach goal.
+        Combines coloring cost + nearest-neighbor lower bound on travel distance.
         """
         grid, pos = node.state.grid, node.state.pos
 
-        # 1. Manhattan distance to return to starting position
-        return_distance = abs(pos[0] - self.start_pos[0]) + \
-            abs(pos[1] - self.start_pos[1])
+        # Cells that still need to be painted with target_color
+        to_color = [(r, c) for r in range(self.rows) for c in range(self.cols)
+                    if (r, c) != self.start_pos and grid[r][c] != self.target_color]
 
-        # 2. Cost to color all EMPTY cells (use Blue's cost = 1, the minimum)
-        empty_count = sum(1 for row in grid for cell in row if cell == Color.EMPTY)
-        empty_cost = empty_count * Color.BLUE.cost
+        color_cost = len(to_color) * self.target_color.cost
 
-        # 3. Cost to achieve uniform coloring among non-empty cells
-        # Find the most frequent color (likely target for all cells)
-        non_empty = [cell for row in grid for cell in row if cell != Color.EMPTY]
-        if non_empty:
-            from collections import Counter
-            color_counts = Counter(non_empty)
-            most_common_count = color_counts.most_common(1)[0][1]
-            # Cells that don't match most common color must be recolored
-            mismatch_count = len(non_empty) - most_common_count
-            # Admissible estimate: recolor each mismatch at minimum cost (Blue = 1)
-            recolor_cost = mismatch_count * Color.BLUE.cost
-        else:
-            recolor_cost = 0
+        if not to_color:
+            return abs(pos[0] - self.start_pos[0]) + abs(pos[1] - self.start_pos[1])
 
-        return return_distance + empty_cost + recolor_cost
+        # Lower bound on travel: reach nearest uncolored cell, then return to start from farthest
+        def mdist(a, b):
+            return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+        min_to_cell = min(mdist(pos, p) for p in to_color)
+        min_cell_to_start = min(mdist(p, self.start_pos) for p in to_color)
+        travel = min_to_cell + min_cell_to_start
+
+        return color_cost + travel
