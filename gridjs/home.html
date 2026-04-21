@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width , maximum-scale=0.9 , user-scalable=0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="content">
+      <h1>Crazione dati</h1>
+      <div>
+        <input type="text" name="" id="student" placeholder="nome" />
+        <span id="instructions"></span>
+        <button id="advbtn" onclick="start()">START</button>
+      </div>
+      <br />
+      <div id="sketchContainer" style="visibility: hidden"></div>
+    </div>
+
+    <script src="js/sketchpad.js"></script>
+    <script src="common/draw.js"></script>
+    <script>
+      let index = 0;
+      const labels = [
+        "car",
+        "fish",
+        "house",
+        "tree",
+        "bicycle",
+        "guitar",
+        "pencil",
+        "clock",
+      ];
+
+      const data = {
+        student: null,
+        session: new Date().getTime(),
+        drawings: {},
+      };
+      const sketchPad = new SketchPad(sketchContainer);
+
+      function start() {
+        if (student.value == "") {
+          alert("Inserisci un nome prima");
+          return;
+        }
+        data.nome = student.value;
+        student.style.display = "none";
+        sketchContainer.style.visibility = "visible";
+        let label = labels[index];
+        instructions.innerHTML = "Disegna: " + label;
+        advbtn.innerHTML = "NEXT";
+        advbtn.onclick = next;
+      }
+
+      function next() {
+        if (sketchPad.paths.length == 0) {
+          alert("Disegna prima qualcosa");
+          return;
+        }
+        let label = labels[index];
+        data.drawings[label] = sketchPad.paths;
+        sketchPad.reset();
+        index++;
+        if (index < labels.length) {
+          let newlabel = labels[index];
+          instructions.innerHTML = "Disegna un " + newlabel;
+        } else {
+          sketchContainer.style.visibility = "hidden";
+          instructions.innerHTML = "Grazie!";
+          advbtn.innerHTML = "SALVA";
+          advbtn.onclick = save;
+        }
+      }
+
+      function save() {
+        advbtn.style.display = "none";
+        instructions.innerHTML = "Salva il file con gli altri";
+
+        let element = document.createElement("a");
+        element.setAttribute(
+          "href",
+          "data:text/plain;charset=utf-8," +
+            encodeURIComponent(JSON.stringify(data))
+        );
+
+        const fileName = data.session + ".json";
+        element.setAttribute("download", fileName);
+
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      }
+    </script>
+  </body>
+</html>
