@@ -29,13 +29,6 @@
       let index = 0;
       const labels = [
         "car",
-        "fish",
-        "house",
-        "tree",
-        "bicycle",
-        "guitar",
-        "pencil",
-        "clock",
       ];
 
       const data = {
@@ -84,19 +77,27 @@
         instructions.innerHTML = "Salva il file con gli altri";
 
         let element = document.createElement("a");
-        element.setAttribute(
-          "href",
-          "data:text/plain;charset=utf-8," +
-            encodeURIComponent(JSON.stringify(data))
-        );
+        const dataURL = generateImageFile(data.drawings['car']);
+        element.setAttribute("href", dataURL);
 
-        const fileName = data.session + ".json";
+        const fileName = data.session + ".png";
         element.setAttribute("download", fileName);
 
         element.style.display = "none";
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
+      }
+
+      function generateImageFile(paths) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        draw.paths(ctx, paths);
+        return canvas.toDataURL('image/png');
       }
     </script>
   </body>
