@@ -1,10 +1,11 @@
 import itertools
 
+from uniform_coloring.problem import Color
+
 
 class Heuristics:
     """
     Collection of heuristics for the UniformColoring problem.
-    Adapted from: https://github.com/youness-1/UniformColoring
 
     Each method takes an AIMA Node and returns an estimated cost h(n).
     The problem instance is required at construction to access start_pos and target_color.
@@ -50,8 +51,7 @@ class Heuristics:
             return self._mdist(pos, p.start_pos)
 
         best = min(
-            self._mdist(pos, cell) + self._mdist(cell, p.start_pos)
-            for cell in wrong
+            self._mdist(pos, cell) + self._mdist(cell, p.start_pos) for cell in wrong
         )
         return color_cost + best
 
@@ -102,3 +102,24 @@ class Heuristics:
                 min_dist = dist
 
         return color_cost + min_dist
+
+    def heuristic_mismatched_coloring(self, node):
+        """
+        Admissible. Minimum coloring cost to reach a uniform grid,
+        ignoring movement costs entirely. Evaluates all possible target colors
+        and returns the lowest cost.
+        """
+        grid = node.state.grid
+        min_cost = float("inf")
+
+        for target_color in [Color.BLUE, Color.YELLOW, Color.GREEN]:
+            cost = sum(
+                target_color.cost
+                for row in grid
+                for cell in row
+                if cell != target_color and cell != Color.EMPTY
+            )
+            if cost < min_cost:
+                min_cost = cost
+
+        return min_cost
