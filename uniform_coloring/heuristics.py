@@ -77,6 +77,44 @@ class Heuristics:
         total_dist += self._mdist(current, p.start_pos)
         return color_cost + total_dist
 
+    def mst(self, node):
+        """
+        Admissible. Minimum Spanning Tree lower bound for TSP.
+        Connects current pos + wrong cells + start_pos via MST (Prim's algorithm).
+        Much faster than ideal O(n!) but still tight lower bound.
+        """
+        p = self.problem
+        pos = node.state.pos
+        wrong = self._wrong_cells(node.state.grid)
+        color_cost = len(wrong) * p.target_color.cost
+
+        if not wrong:
+            return self._mdist(pos, p.start_pos)
+
+        points = [pos] + wrong + [p.start_pos]
+        n = len(points)
+
+        in_tree = [False] * n
+        in_tree[0] = True
+        edges_weight = 0
+
+        for _ in range(n - 1):
+            min_edge = float('inf')
+            next_point = -1
+            for i in range(n):
+                if in_tree[i]:
+                    for j in range(n):
+                        if not in_tree[j]:
+                            dist = self._mdist(points[i], points[j])
+                            if dist < min_edge:
+                                min_edge = dist
+                                next_point = j
+
+            edges_weight += min_edge
+            in_tree[next_point] = True
+
+        return color_cost + edges_weight
+
     def ideal(self, node):
         """
         Admissible. Tries ALL permutations of wrong cells to find the minimum
