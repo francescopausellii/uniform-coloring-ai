@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crea griglia</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="content">
+      <h1>Crea griglia</h1>
+
+      <div id="controls">
+        <label>Righe <input type="number" id="rows" value="4" min="1" max="20" /></label>
+        <label>Colonne <input type="number" id="cols" value="4" min="1" max="20" /></label>
+        <label>Cella px <input type="number" id="cell" value="80" min="30" max="200" /></label>
+        <button id="newBtn">Nuova griglia</button>
+        <button id="undoBtn">Annulla (Ctrl+Z)</button>
+        <button id="clearBtn">Cancella tratti</button>
+        <button id="guideBtn">Mostra/nascondi guida</button>
+        <button id="saveBtn">Scarica PNG</button>
+      </div>
+
+      <p class="hint">Disegna a mano griglia e lettere (la guida grigia serve solo da riferimento e non viene salvata). Il PNG esportato contiene solo i tuoi tratti neri su bianco, pronto per la pipeline OpenCV.</p>
+
+      <div id="sketchContainer"></div>
+    </div>
+
+    <script src="common/draw.js"></script>
+    <script src="js/sketchpad.js"></script>
+    <script>
+      const container = document.getElementById("sketchContainer");
+      let pad;
+
+      function buildGrid() {
+        container.innerHTML = "";
+        pad = new GridSketchPad(container, {
+          rows: clamp(rows.value, 1, 20),
+          cols: clamp(cols.value, 1, 20),
+          cell: clamp(cell.value, 30, 200),
+        });
+      }
+
+      function clamp(v, lo, hi) {
+        return Math.max(lo, Math.min(hi, parseInt(v) || lo));
+      }
+
+      function save() {
+        const a = document.createElement("a");
+        a.href = pad.toDataURL();
+        a.download = `grid_${pad.rows}x${pad.cols}_${Date.now()}.png`;
+        a.click();
+      }
+
+      newBtn.onclick = buildGrid;
+      undoBtn.onclick = () => pad.undo();
+      clearBtn.onclick = () => pad.reset();
+      guideBtn.onclick = () => pad.toggleGuide();
+      saveBtn.onclick = save;
+
+      buildGrid();
+    </script>
+  </body>
+</html>
