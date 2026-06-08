@@ -1,0 +1,109 @@
+class SketchPad {
+  constructor(container, onUpdate = null, size = 400) {
+    this.canvas = document.createElement("canvas");
+    this.canvas.width = size;
+    this.canvas.height = size;
+    this.canvas.style =
+      "background-color: white; box-shadow: 0px 0px 10px 2px black;";
+    container.appendChild(this.canvas);
+
+    let lineBreak = document.createElement("br");
+    container.appendChild(lineBreak);
+
+    this.undoBtn = document.createElement("button");
+    this.undoBtn.innerHTML = "UNDO";
+    this.undoBtn.disabled = true;
+    container.appendChild(this.undoBtn);
+
+    this.paths = [];
+    this.isDrawing = false;
+
+    this.ctx = this.canvas.getContext("2d");
+
+    this.onUpdate = onUpdate;
+    this.reset();
+
+    this.#addEventListeners();
+  }
+
+  reset() {
+    this.paths = [];
+    this.isDrawing = false;
+    this.#render();
+  }
+
+  #addEventListeners() {
+    this.canvas.onmousedown = (evt) => {
+      const mouse = this.#getMouse(evt);
+      this.paths.push([mouse]);
+      this.isDrawing = true;
+    };
+
+    this.canvas.onmousemove = (evt) => {
+      if (this.isDrawing) {
+        const mouse = this.#getMouse(evt);
+        let lastPath = this.paths[this.paths.length - 1];
+        lastPath.push(mouse);
+        this.#render();
+      }
+    };
+
+    document.onmouseup = () => {
+      this.isDrawing = false;
+    };
+
+    this.canvas.ontouchstart = (evt) => {
+      let loc = evt.touches[0];
+      this.canvas.onmousedown(loc);
+    };
+
+    this.canvas.ontouchmove = (evt) => {
+      let loc = evt.touches[0];
+      this.canvas.onmousemove(loc);
+    };
+
+    document.ontouchend = () => {
+      this.canvas.onmouseup();
+    };
+
+    this.undoBtn.onclick = () => {
+      this.paths.pop();
+      this.#render();
+    };
+
+    document.onkeydown = (evt) => {
+      if (evt.ctrlKey && evt.key === "z") {
+        evt.preventDefault();
+        this.paths.pop();
+        this.#render();
+      }
+    };
+  }
+
+  #render() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    draw.paths(this.ctx, this.paths);
+    if (this.paths.length > 0) {
+      this.undoBtn.disabled = false;
+    } else {
+      this.undoBtn.disabled = true;
+    }
+    if(this.onUpdate){
+      this.onUpdate(this.paths);
+    }
+  }
+
+  triggerUpdate(){
+    if(this.onUpdate){
+      this.onUpdate(this.paths);
+    }
+  }
+
+  #getMouse = (evt) => {
+    const rect = this.canvas.getBoundingClientRect();
+    return [
+      Math.round(evt.clientX - rect.left),
+      Math.round(evt.clientY - rect.top),
+    ];
+  };
+}

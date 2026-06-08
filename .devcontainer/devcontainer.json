@@ -1,8 +1,11 @@
 {
   "image": "mcr.microsoft.com/devcontainers/python:3.10-bookworm",
+  "hostRequirements": {
+    "cpus": 4
+  },
   "waitFor": "onCreateCommand",
   "updateContentCommand": "python3 -m pip install -r requirements.txt",
-  "postCreateCommand": "",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y ffmpeg libsm6 libxext6",
   "customizations": {
     "codespaces": {
       "openFiles": []

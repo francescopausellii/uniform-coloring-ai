@@ -3,6 +3,8 @@ notebooks/cifar_net.pth
 .ipynb_checkpoints/
 */__pycache__
 
+emnist.zip
+
 # Dataset
 dataset/
 *.zip

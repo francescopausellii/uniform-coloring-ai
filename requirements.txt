@@ -1,8 +1,7 @@
-ipywidgets==8.1.2
+emnist>=0.0
 matplotlib==3.8.4
+numpy==1.26.4
+opencv-contrib-python==4.10.0.84
 pandas==2.2.2
-torch==2.8.0
-torchvision==0.23.0
-tqdm==4.66.4
-fonttools>=4.60.0
-filelock>=3.20.1
+scikit-learn==1.5.1
+tensorflow==2.17.0
