@@ -64,7 +64,6 @@ def extract_all_cells(gray, pts):
             row_cells.append(cell)
         cells_2d.append(row_cells)
 
-    print(f"Celle estratte: {n_rows} x {n_cols}")
     return cells_2d
 
 

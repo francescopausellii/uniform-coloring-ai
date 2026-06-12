@@ -10,7 +10,6 @@ def preparation(path, show=False):
     img = cv.imread(path)
     if img is None:
         raise FileNotFoundError(f"Immagine non trovata: {path}")
-    print(f"Immagine: {img.shape[1]}x{img.shape[0]} px")
 
     # Non servono i canali di colore, solo grigi
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -25,7 +24,7 @@ def preparation(path, show=False):
     edges = cv.Canny(blurred, threshold1=otsu_thresh * 0.5, threshold2=otsu_thresh)
 
     if show:
-        show_images([img, gray, edges], ["Originale", "Grigio", "Canny edges"])
+        show_images([img, gray, edges], ["Original", "Grayscale", "Canny edges"])
 
     return img, gray, edges
 
@@ -57,6 +56,6 @@ def extract_grid_mask(gray, show=False):
     if show:
         show_images(
             [bw, hor, ver, grid],
-            ["Binaria Otsu", "Linee H", "Linee V", "Maschera griglia"],
+            ["Otsu binary", "H lines", "V lines", "Grid mask"],
         )
     return grid

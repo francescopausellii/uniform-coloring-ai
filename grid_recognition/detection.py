@@ -47,7 +47,6 @@ def detect_segments(edges):
 
     # Converto in lista di tuple
     segments = [tuple(s[0]) for s in segments]
-    print(f"Segmenti Hough trovati: {len(segments)}")
     return segments
 
 
@@ -73,8 +72,6 @@ def classify_segments(segs, angle_tol=ANGLE_TOL_DEG):
             vert.append(seg)
         # segmenti obliqui (lettere diagonali) vengono ignorati
 
-    print(f"Segmenti orizzontali: {len(horiz)}")
-    print(f"Segmenti verticali:   {len(vert)}")
     return horiz, vert
 
 
@@ -138,7 +135,6 @@ def filter_clusters_by_span(horiz_cl, vert_cl, span_frac=SPAN_FRAC):
         horiz_cl = [
             cl for cl in horiz_cl if _cluster_span(cl, 0) >= span_frac * max_h_span
         ]
-    print(f"Linee valide dopo filtro span -> H:{len(horiz_cl)} V:{len(vert_cl)}")
     return horiz_cl, vert_cl
 
 
@@ -242,8 +238,6 @@ def build_grid_lines(horiz_clusters, vert_clusters, img_shape):
     h_lines.sort(key=lambda l: l["pos"])
     v_lines.sort(key=lambda l: l["pos"])
 
-    print(f"Linee griglia orizzontali: {len(h_lines)}")
-    print(f"Linee griglia verticali:   {len(v_lines)}")
     return h_lines, v_lines
 
 

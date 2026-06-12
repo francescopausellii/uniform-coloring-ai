@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib import animation
 from matplotlib.patches import FancyArrowPatch
 
 from .problem import Color, Move
@@ -160,6 +161,66 @@ def _draw_steps(axes, problem, solution):
         ax.axis("off")
 
     return len(states)
+
+
+def animate_solution(problem, solution, title="", interval=700):
+    """
+    Anima la soluzione step-by-step: un frame per ogni azione, con la
+    testina che si muove e le celle che cambiano colore.
+    Restituisce una FuncAnimation: nel notebook mostrarla con
+    HTML(anim.to_jshtml()) per avere i controlli play/pausa/step.
+    """
+    if solution is None:
+        print(f"✗ No solution to animate for {title}")
+        return None
+
+    actions = solution.solution()
+    # Ricostruisce la sequenza di stati replicando le azioni dal nodo iniziale
+    states = [problem.initial]
+    for action in actions:
+        states.append(problem.result(states[-1], action))
+
+    grid = problem.initial.grid
+    fig, ax = plt.subplots(
+        figsize=(max(3.5, len(grid[0]) * 1.2), max(3.5, len(grid) * 1.2))
+    )
+
+    def frame(i):
+        ax.clear()
+        _draw_grid(ax, states[i].grid, start_pos=problem.start_pos,
+                   head_pos=states[i].pos)
+        label = "Initial" if i == 0 else f"step {i}/{len(actions)}: {actions[i - 1]}"
+        ax.set_title(f"{title}\n{label}", fontsize=10)
+
+    anim = animation.FuncAnimation(
+        fig, frame, frames=len(states), interval=interval, repeat=True
+    )
+    plt.close(fig)  # evita la figura statica duplicata sotto l'animazione
+    return anim
+
+
+def plot_initial_state(problem):
+    """
+    Mostra lo stato iniziale del problema come griglia colorata:
+    testina sulla posizione di partenza (bordo rosso) e, nel titolo,
+    posizione e colore target scelto per la colorazione uniforme.
+    """
+    grid = problem.initial.grid
+    fig, ax = plt.subplots(
+        figsize=(max(3.5, len(grid[0]) * 1.2), max(3.5, len(grid) * 1.2))
+    )
+    _draw_grid(ax, grid, start_pos=problem.start_pos)
+    # "T" semplice nella cella di partenza (niente cerchio: la testina non si è ancora mossa)
+    x, y = _cell_center(problem.start_pos, len(grid))
+    ax.text(x, y, "T", ha="center", va="center", fontsize=14,
+            fontweight="bold", color="#333333")
+    ax.set_title(
+        f"Initial state\nhead at {problem.initial.pos}, "
+        f"target color: {problem.target_color.symbol}",
+        fontsize=10,
+    )
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_solution(problem, solution, title="", step_cols=7):

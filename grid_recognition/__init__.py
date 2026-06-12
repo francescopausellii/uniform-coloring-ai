@@ -19,6 +19,11 @@ from .visualization import (
     draw_grid_lines,
     draw_intersections,
     draw_all_segments,
+    show_preprocessing,
+    show_line_detection,
     visualize_cells,
+    show_recognized_cells,
+    show_recognition_result,
+    show_grid_matrix,
     print_matrix,
 )
