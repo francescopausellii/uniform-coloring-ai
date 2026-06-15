@@ -7,7 +7,7 @@ class GridSketchPad {
     this.cols = opts.cols ?? 4;
     this.cell = opts.cell ?? 80;
     this.margin = opts.margin ?? 20;
-    this.penWidth = opts.penWidth ?? 4;
+    this.penWidth = opts.penWidth ?? 2;
     this.showGuide = opts.showGuide ?? true;
 
     this.width = this.margin * 2 + this.cols * this.cell;
@@ -45,7 +45,7 @@ class GridSketchPad {
     if (this.showGuide) {
       draw.grid(this.ctx, this.rows, this.cols, this.cell, this.margin, "#d8d8d8", 1);
     }
-    draw.paths(this.ctx, this.paths, "black", this.penWidth);
+    draw.pens(this.ctx, this.paths, "black", this.penWidth);
   }
 
   toggleGuide() {
@@ -65,12 +65,28 @@ class GridSketchPad {
     return url;
   }
 
+  // PNG con griglia automatica (linee nere piene generate dal programma) +
+  // i tratti disegnati a mano. La guida grigia viene esclusa.
+  toDataURLWithGrid() {
+    const guide = this.showGuide;
+    this.showGuide = false;
+    this.ctx.fillStyle = "white";
+    this.ctx.fillRect(0, 0, this.width, this.height);
+    draw.grid(this.ctx, this.rows, this.cols, this.cell, this.margin, "black", 2);
+    draw.pens(this.ctx, this.paths, "black", this.penWidth);
+    const url = this.canvas.toDataURL("image/png");
+    this.showGuide = guide;
+    this.render();
+    return url;
+  }
+
   #getPos(evt) {
     const rect = this.canvas.getBoundingClientRect();
     const src = evt.touches ? evt.touches[0] : evt;
     return [
       Math.round(src.clientX - rect.left),
       Math.round(src.clientY - rect.top),
+      performance.now(),
     ];
   }
 
