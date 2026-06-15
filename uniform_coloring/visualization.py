@@ -14,7 +14,9 @@ CELL_FILL = {
 }
 
 
-def _draw_grid(ax, grid, start_pos=None, head_pos=None, cell_fontsize=14, head_fontsize=15):
+def _draw_grid(
+    ax, grid, start_pos=None, head_pos=None, cell_fontsize=14, head_fontsize=15
+):
     """Disegna la griglia colorata su un axes (riga 0 in alto)."""
     rows, cols = len(grid), len(grid[0])
     for r in range(rows):
@@ -22,35 +24,53 @@ def _draw_grid(ax, grid, start_pos=None, head_pos=None, cell_fontsize=14, head_f
             symbol = getattr(grid[r][c], "symbol", grid[r][c])
             ax.add_patch(
                 mpatches.Rectangle(
-                    (c, rows - 1 - r), 1, 1,
+                    (c, rows - 1 - r),
+                    1,
+                    1,
                     facecolor=CELL_FILL.get(symbol, "white"),
-                    edgecolor="black", linewidth=1.5,
+                    edgecolor="black",
+                    linewidth=1.5,
                 )
             )
-            # La cella EMPTY ha simbolo "T" ma è solo la casella di partenza:
-            # la T vera è la testina, disegnata a parte sulla posizione corrente
+            # "T" è la cella di partenza, non la testina (quella è su head_pos)
             if symbol != "T":
                 ax.text(
-                    c + 0.5, rows - 1 - r + 0.5, symbol,
-                    ha="center", va="center", fontsize=cell_fontsize,
-                    fontweight="bold", color="#333333",
+                    c + 0.5,
+                    rows - 1 - r + 0.5,
+                    symbol,
+                    ha="center",
+                    va="center",
+                    fontsize=cell_fontsize,
+                    fontweight="bold",
+                    color="#333333",
                 )
     # Evidenzia la cella di partenza (dove la testina deve tornare)
     if start_pos is not None:
         r, c = start_pos
         ax.add_patch(
             mpatches.Rectangle(
-                (c, rows - 1 - r), 1, 1,
-                facecolor="none", edgecolor="red", linewidth=3,
+                (c, rows - 1 - r),
+                1,
+                1,
+                facecolor="none",
+                edgecolor="red",
+                linewidth=3,
             )
         )
-    # Posizione corrente della testina: "T" rossa che si sposta con i movimenti
     if head_pos is not None:
         r, c = head_pos
-        ax.text(c + 0.5, rows - 1 - r + 0.5, "T",
-                ha="center", va="center", fontsize=head_fontsize, fontweight="bold",
-                color="red", zorder=7,
-                bbox=dict(boxstyle="circle,pad=0.25", fc="white", ec="red", lw=1.5))
+        ax.text(
+            c + 0.5,
+            rows - 1 - r + 0.5,
+            "T",
+            ha="center",
+            va="center",
+            fontsize=head_fontsize,
+            fontweight="bold",
+            color="red",
+            zorder=7,
+            bbox=dict(boxstyle="circle,pad=0.25", fc="white", ec="red", lw=1.5),
+        )
     ax.set_xlim(-0.1, cols + 0.1)
     ax.set_ylim(-0.1, rows + 0.1)
     ax.set_aspect("equal")
@@ -61,6 +81,14 @@ def _cell_center(pos, rows):
     """Centro della cella (r, c) in coordinate del plot."""
     r, c = pos
     return (c + 0.5, rows - 1 - r + 0.5)
+
+
+def _build_states(problem, solution):
+    """Ricostruisce la sequenza di stati dall'iniziale applicando le azioni della soluzione."""
+    states = [problem.initial]
+    for action in solution.solution():
+        states.append(problem.result(states[-1], action))
+    return states
 
 
 def _draw_path(ax, problem, solution, title=""):
@@ -78,9 +106,7 @@ def _draw_path(ax, problem, solution, title=""):
 
     _draw_grid(ax, grid, start_pos=problem.start_pos, head_pos=problem.start_pos)
 
-    # Prima passata: conta quante volte ogni tratta viene percorsa, così gli
-    # offset si possono distribuire simmetricamente attorno al centro cella
-    # (1 freccia -> centrata; 2 -> ±0.11; 3 -> -0.22, 0, +0.22; ...)
+    # conta le traversate per tratta, per distribuire gli offset simmetricamente
     pos = problem.start_pos
     edge_total = {}
     for action in actions:
@@ -92,7 +118,7 @@ def _draw_path(ax, problem, solution, title=""):
             pos = new_pos
 
     pos = problem.start_pos
-    edge_count = {}  # quante volte una tratta è già stata percorsa
+    edge_count = {}
 
     for i, action in enumerate(actions, 1):
         if isinstance(action, Move):
@@ -103,32 +129,52 @@ def _draw_path(ax, problem, solution, title=""):
             n = edge_count.get(key, 0)
             edge_count[key] = n + 1
             offset = (n - (edge_total[key] - 1) / 2) * 0.22
-            # perpendicolare al movimento: se mi muovo in orizzontale sfalso in verticale e viceversa
+            # offset perpendicolare al movimento
             ox, oy = (0.0, offset) if dc != 0 else (offset, 0.0)
 
             x1, y1 = _cell_center(pos, rows)
             x2, y2 = _cell_center(new_pos, rows)
             arrow = FancyArrowPatch(
-                (x1 + ox, y1 + oy), (x2 + ox, y2 + oy),
-                arrowstyle="-|>", mutation_scale=11,
-                color="#d62728", linewidth=1.2, shrinkA=8, shrinkB=8, zorder=5,
+                (x1 + ox, y1 + oy),
+                (x2 + ox, y2 + oy),
+                arrowstyle="-|>",
+                mutation_scale=11,
+                color="#d62728",
+                linewidth=1.2,
+                shrinkA=8,
+                shrinkB=8,
+                zorder=5,
             )
             ax.add_patch(arrow)
-            # Numero dello step verso la coda della freccia, lontano dalla punta
             xm = x1 + 0.3 * (x2 - x1)
             ym = y1 + 0.3 * (y2 - y1)
-            ax.text(xm + ox, ym + oy, str(i),
-                    fontsize=7, fontweight="bold", color="white", zorder=6,
-                    ha="center", va="center",
-                    bbox=dict(boxstyle="circle,pad=0.12", fc="#d62728", ec="none"))
+            ax.text(
+                xm + ox,
+                ym + oy,
+                str(i),
+                fontsize=7,
+                fontweight="bold",
+                color="white",
+                zorder=6,
+                ha="center",
+                va="center",
+                bbox=dict(boxstyle="circle,pad=0.12", fc="#d62728", ec="none"),
+            )
             pos = new_pos
         elif isinstance(action, Color):
-            # Cerchio numerato nell'angolo della cella: qui la testina ha colorato
             x, y = _cell_center(pos, rows)
-            ax.text(x + 0.3, y - 0.3, str(i),
-                    fontsize=9, fontweight="bold", color="white", zorder=6,
-                    ha="center", va="center",
-                    bbox=dict(boxstyle="circle,pad=0.2", fc="#2ca02c", ec="black"))
+            ax.text(
+                x + 0.3,
+                y - 0.3,
+                str(i),
+                fontsize=9,
+                fontweight="bold",
+                color="white",
+                zorder=6,
+                ha="center",
+                va="center",
+                bbox=dict(boxstyle="circle,pad=0.2", fc="#2ca02c", ec="black"),
+            )
 
     ax.set_title(
         f"{title}\n{len(actions)} steps, cost {solution.path_cost}\n"
@@ -143,21 +189,23 @@ def _draw_steps(axes, problem, solution):
     sugli axes forniti, mostrando come la griglia evolve fino allo stato finale.
     """
     actions = solution.solution()
-    # Ricostruisce la sequenza di stati replicando le azioni dal nodo iniziale
-    states = [problem.initial]
-    for action in actions:
-        states.append(problem.result(states[-1], action))
+    states = _build_states(problem, solution)
 
     for idx, (ax, state) in enumerate(zip(axes, states)):
-        _draw_grid(ax, state.grid, start_pos=problem.start_pos,
-                   head_pos=state.pos, cell_fontsize=8, head_fontsize=8)
+        _draw_grid(
+            ax,
+            state.grid,
+            start_pos=problem.start_pos,
+            head_pos=state.pos,
+            cell_fontsize=8,
+            head_fontsize=8,
+        )
         if idx == 0:
             ax.set_title("Initial", fontsize=8)
         else:
             ax.set_title(f"{idx}. {actions[idx - 1]}", fontsize=7)
 
-    # Nasconde gli assi avanzati
-    for ax in axes[len(states):]:
+    for ax in axes[len(states) :]:
         ax.axis("off")
 
     return len(states)
@@ -175,10 +223,7 @@ def animate_solution(problem, solution, title="", interval=700):
         return None
 
     actions = solution.solution()
-    # Ricostruisce la sequenza di stati replicando le azioni dal nodo iniziale
-    states = [problem.initial]
-    for action in actions:
-        states.append(problem.result(states[-1], action))
+    states = _build_states(problem, solution)
 
     grid = problem.initial.grid
     fig, ax = plt.subplots(
@@ -187,8 +232,9 @@ def animate_solution(problem, solution, title="", interval=700):
 
     def frame(i):
         ax.clear()
-        _draw_grid(ax, states[i].grid, start_pos=problem.start_pos,
-                   head_pos=states[i].pos)
+        _draw_grid(
+            ax, states[i].grid, start_pos=problem.start_pos, head_pos=states[i].pos
+        )
         label = "Initial" if i == 0 else f"step {i}/{len(actions)}: {actions[i - 1]}"
         ax.set_title(f"{title}\n{label}", fontsize=10)
 
@@ -210,10 +256,18 @@ def plot_initial_state(problem):
         figsize=(max(3.5, len(grid[0]) * 1.2), max(3.5, len(grid) * 1.2))
     )
     _draw_grid(ax, grid, start_pos=problem.start_pos)
-    # "T" semplice nella cella di partenza (niente cerchio: la testina non si è ancora mossa)
+    # T semplice: la testina non si è ancora mossa
     x, y = _cell_center(problem.start_pos, len(grid))
-    ax.text(x, y, "T", ha="center", va="center", fontsize=14,
-            fontweight="bold", color="#333333")
+    ax.text(
+        x,
+        y,
+        "T",
+        ha="center",
+        va="center",
+        fontsize=14,
+        fontweight="bold",
+        color="#333333",
+    )
     ax.set_title(
         f"Initial state\nhead at {problem.initial.pos}, "
         f"target color: {problem.target_color.symbol}",
@@ -238,8 +292,6 @@ def plot_solution(problem, solution, title="", step_cols=7):
     grid_rows = len(problem.initial.grid)
     grid_cols = len(problem.initial.grid[0])
 
-    # Pannello sinistro compatto: la dimensione della figura è dettata dagli
-    # step a destra, il path si adatta mantenendo le proporzioni
     path_w = max(3.0, grid_cols * 1.0)
     steps_w = step_cols * 1.5
     height = max(grid_rows * 1.0 + 1.2, step_rows * 1.7)
@@ -247,11 +299,9 @@ def plot_solution(problem, solution, title="", step_cols=7):
     fig = plt.figure(figsize=(path_w + steps_w, height))
     gs = fig.add_gridspec(1, 2, width_ratios=[path_w, steps_w], wspace=0.05)
 
-    # Sinistra: percorso riassuntivo
     ax_path = fig.add_subplot(gs[0, 0])
     _draw_path(ax_path, problem, solution, title)
 
-    # Destra: evoluzione passo-passo
     sub = gs[0, 1].subgridspec(step_rows, step_cols, hspace=0.45, wspace=0.1)
     axes = [fig.add_subplot(sub[i]) for i in range(step_rows * step_cols)]
     _draw_steps(axes, problem, solution)
