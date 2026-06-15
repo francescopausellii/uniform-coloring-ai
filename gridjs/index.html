@@ -33,6 +33,7 @@
     <script>
       const container = document.getElementById("sketchContainer");
       let pad;
+      let i = 1;
 
       function buildGrid() {
         container.innerHTML = "";
@@ -51,7 +52,7 @@
       function download(dataURL, suffix) {
         const a = document.createElement("a");
         a.href = dataURL;
-        a.download = `grid_${pad.rows}x${pad.cols}_${suffix}_${Date.now()}.png`;
+        a.download = `grid_${pad.rows}x${pad.cols}_${suffix}_${i++}.png`;
         a.click();
       }
 
