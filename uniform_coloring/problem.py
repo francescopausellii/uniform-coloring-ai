@@ -149,10 +149,11 @@ class UniformColoring(Problem):
         """
         Euristica di default: costo colorazione + lower bound sul movimento
         (distanza alla cella sbagliata più vicina + distanza di quella a start).
-        Ammissibile ma poco informativa; heuristics.py offre alternative migliori.
+        Ammissibile ma poco informativa.
         """
         grid, pos = node.state.grid, node.state.pos
 
+        # Somma dei costi per tutte le celle che non sono del target_color e non sono start_pos
         to_color = [
             (r, c)
             for r in range(self.rows)
@@ -160,15 +161,20 @@ class UniformColoring(Problem):
             if (r, c) != self.start_pos and grid[r][c] != self.target_color
         ]
 
+        # Costo totale per colorare tutte le celle sbagliate
         color_cost = len(to_color) * self.target_color.cost
 
+        # Distanza di Manhattan dalla posizione corrente alla cella sbagliata più vicina, più la distanza di quella cella a start_pos
         if not to_color:
             return abs(pos[0] - self.start_pos[0]) + abs(pos[1] - self.start_pos[1])
 
+        # Distanza di Manhattan tra due posizioni (riga, colonna)
         def mdist(a, b):
             return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
+        # Calcola la distanza minima dalla posizione corrente a una cella sbagliata e da quella cella a start_pos
         min_to_cell = min(mdist(pos, p) for p in to_color)
+        # Calcola la distanza minima da una cella sbagliata a start_pos
         min_cell_to_start = min(mdist(p, self.start_pos) for p in to_color)
         travel = min_to_cell + min_cell_to_start
 

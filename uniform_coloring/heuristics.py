@@ -24,7 +24,9 @@ class Heuristics:
 
     def color(self, node):
         """h = celle_sbagliate × costo_target. Ammissibile, ignora completamente i movimenti."""
+        # Somma dei costi per tutte le celle che non sono del target_color e non sono start_pos
         wrong = self._wrong_cells(node.state.grid)
+        # Costo totale per colorare tutte le celle sbagliate
         return len(wrong) * self.problem.target_color.cost
 
     def color_nearest_distance(self, node):
@@ -37,9 +39,11 @@ class Heuristics:
         wrong = self._wrong_cells(node.state.grid)
         color_cost = len(wrong) * p.target_color.cost
 
+        # Se non ci sono celle sbagliate, il costo è solo la distanza dalla posizione corrente alla posizione di partenza
         if not wrong:
             return self._mdist(pos, p.start_pos)
 
+        # Altrimenti calcoliamo il costo minimo per visitare una cella sbagliata e tornare alla posizione di partenza
         best = min(
             self._mdist(pos, cell) + self._mdist(cell, p.start_pos) for cell in wrong
         )
@@ -55,6 +59,7 @@ class Heuristics:
         wrong = self._wrong_cells(node.state.grid)
         color_cost = len(wrong) * p.target_color.cost
 
+        # Se non ci sono celle sbagliate, il costo è solo la distanza dalla posizione corrente alla posizione di partenza
         if not wrong:
             return self._mdist(pos, p.start_pos)
 
