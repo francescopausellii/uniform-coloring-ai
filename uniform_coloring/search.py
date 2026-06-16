@@ -11,16 +11,19 @@ def breadth_first_graph_search(problem):
     node = Node(problem.initial)
 
     if problem.goal_test(node.state):
+        node.nodes_expanded = 0
         return node
 
     frontier = deque([node])
     frontier_ids = {node.state.id}
     explored = set()
+    nodes_expanded = 0
 
     while frontier:
         node = frontier.popleft()
         frontier_ids.discard(node.state.id)
         explored.add(node.state.id)
+        nodes_expanded += 1
 
         for child in node.expand(problem):
             sid = child.state.id
@@ -28,6 +31,7 @@ def breadth_first_graph_search(problem):
             if sid not in explored and sid not in frontier_ids:
                 # goal test al momento della generazione
                 if problem.goal_test(child.state):
+                    child.nodes_expanded = nodes_expanded
                     return child
 
                 frontier.append(child)
@@ -45,9 +49,11 @@ def uniform_cost_search(problem):
     """
     node = Node(problem.initial)
 
-    # (path_cost, tiebreaker, nodo) — tiebreaker evita confronti diretti tra Node
-    frontier = [(0, id(node), node)]
+    # (path_cost, counter, nodo) — counter monotono garantisce determinismo sui pareggi
+    counter = 0
+    frontier = [(0, counter, node)]
     explored = set()
+    nodes_expanded = 0
 
     while frontier:
         _, _, node = heapq.heappop(frontier)
@@ -57,13 +63,16 @@ def uniform_cost_search(problem):
             continue
 
         if problem.goal_test(node.state):
+            node.nodes_expanded = nodes_expanded
             return node
 
         explored.add(node.state.id)
+        nodes_expanded += 1
 
         for child in node.expand(problem):
             if child.state.id not in explored:
-                heapq.heappush(frontier, (child.path_cost, id(child), child))
+                counter += 1
+                heapq.heappush(frontier, (child.path_cost, counter, child))
 
     return None
 
@@ -76,8 +85,10 @@ def astar_search(problem, h=None):
     h = h or problem.h
 
     node = Node(problem.initial)
-    frontier = [(node.path_cost + h(node), id(node), node)]
+    counter = 0
+    frontier = [(node.path_cost + h(node), counter, node)]
     explored = set()
+    nodes_expanded = 0
 
     while frontier:
         _, _, node = heapq.heappop(frontier)
@@ -87,13 +98,16 @@ def astar_search(problem, h=None):
             continue
 
         if problem.goal_test(node.state):
+            node.nodes_expanded = nodes_expanded
             return node
 
         explored.add(node.state.id)
+        nodes_expanded += 1
 
         for child in node.expand(problem):
             if child.state.id not in explored:
+                counter += 1
                 f = child.path_cost + h(child)
-                heapq.heappush(frontier, (f, id(child), child))
+                heapq.heappush(frontier, (f, counter, child))
 
     return None
