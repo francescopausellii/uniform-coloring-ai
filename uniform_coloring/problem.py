@@ -54,13 +54,7 @@ class State:
 
 
 class UniformColoring(Problem):
-    def __init__(self, grid_matrix):
-        """
-        Costruisce il problema da una matrice di caratteri.
-
-        Trova 'T' (start_pos), converte i caratteri in Color, e sceglie
-        target_color come il colore che minimizza il costo totale di ricolorazione.
-        """
+    def __init__(self, grid_matrix, target_color=None):
         self.rows = len(grid_matrix)
         self.cols = len(grid_matrix[0])
         self.start_pos = None
@@ -78,18 +72,21 @@ class UniformColoring(Problem):
                     row_colors.append(symbol_to_color[char])
             initial_grid.append(tuple(row_colors))
 
-        non_start = [
-            (r, c)
-            for r in range(self.rows)
-            for c in range(self.cols)
-            if (r, c) != self.start_pos
-        ]
-        self.target_color = min(
-            [Color.BLUE, Color.YELLOW, Color.GREEN],
-            key=lambda tc: sum(
-                tc.cost for r, c in non_start if initial_grid[r][c] != tc
-            ),
-        )
+        if target_color is not None:
+            self.target_color = target_color
+        else:
+            non_start = [
+                (r, c)
+                for r in range(self.rows)
+                for c in range(self.cols)
+                if (r, c) != self.start_pos
+            ]
+            self.target_color = min(
+                [Color.BLUE, Color.YELLOW, Color.GREEN],
+                key=lambda tc: sum(
+                    tc.cost for r, c in non_start if initial_grid[r][c] != tc
+                ),
+            )
 
         initial_state = State(tuple(initial_grid), self.start_pos)
 
@@ -146,7 +143,7 @@ class UniformColoring(Problem):
             for c in range(self.cols)
             if (r, c) != self.start_pos
         }
-        return not colors or (len(colors) == 1 and Color.EMPTY not in colors)
+        return not colors or len(colors) == 1
 
     def h(self, node):
         """

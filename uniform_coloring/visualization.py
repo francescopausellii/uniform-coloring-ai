@@ -255,19 +255,7 @@ def plot_initial_state(problem):
     fig, ax = plt.subplots(
         figsize=(max(3.5, len(grid[0]) * 1.2), max(3.5, len(grid) * 1.2))
     )
-    _draw_grid(ax, grid, start_pos=problem.start_pos)
-    # T semplice: la testina non si è ancora mossa
-    x, y = _cell_center(problem.start_pos, len(grid))
-    ax.text(
-        x,
-        y,
-        "T",
-        ha="center",
-        va="center",
-        fontsize=14,
-        fontweight="bold",
-        color="#333333",
-    )
+    _draw_grid(ax, grid, start_pos=problem.start_pos, head_pos=problem.start_pos)
     ax.set_title(
         f"Initial state\nhead at {problem.initial.pos}, "
         f"target color: {problem.target_color.symbol}",

@@ -16,7 +16,7 @@ Uniform Coloring è un dominio in cui si ha una griglia rettangolare di celle co
 Uno stato è una tripla $(r_T, c_T, \text{grid})$ dove:
 - $(r_T, c_T)$ è la posizione corrente della testina
 - $\text{grid}$ è una tupla di $R \times C$ colori che rappresenta la colorazione di tutte le celle
-- La cella della testina mantiene il colore che aveva prima che T vi si posizionasse (inizialmente non ha colore, verrà colorata dall'agente)
+- La cella di partenza $(r_0, c_0)$ non ha un colore proprio (è identificata da $T$) e non può mai essere colorata dall'agente
 
 ### Azioni
 | Azione | Precondizione | Effetto | Costo |
@@ -35,8 +35,9 @@ Uno stato è una tripla $(r_T, c_T, \text{grid})$ dove:
 - **V3**: L'agente non può uscire dalla griglia
 - **V4**: L'agente può colorare solo la cella in cui si trova
 - **V5**: L'agente può colorare la cella con qualsiasi colore disponibile, anche lo stesso colore già presente
+- **V6**: L'agente non può colorare la cella di partenza $(r_0, c_0)$
 
 ### Goal Test
 Uno stato è goal se:
-1. Tutte le celle della griglia hanno lo **stesso colore**
+1. Tutte le celle della griglia, **esclusa la cella di partenza** $(r_0, c_0)$, hanno lo **stesso colore**
 2. La testina si trova nella **posizione iniziale** $(r_0, c_0)$
