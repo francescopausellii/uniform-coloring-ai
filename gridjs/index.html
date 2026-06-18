@@ -14,11 +14,13 @@
         <label>Righe <input type="number" id="rows" value="4" min="1" max="20" /></label>
         <label>Colonne <input type="number" id="cols" value="4" min="1" max="20" /></label>
         <label>Cella px <input type="number" id="cell" value="80" min="30" max="200" /></label>
+        <label>Penna px <input type="number" id="pen" value="2" min="1" max="3" /></label>
         <button id="newBtn">Nuova griglia</button>
         <button id="undoBtn">Annulla (Ctrl+Z)</button>
         <button id="clearBtn">Cancella tratti</button>
         <button id="guideBtn">Mostra/nascondi guida</button>
         <button id="saveBtn">Scarica PNG</button>
+        <button id="saveGridBtn">Scarica PNG (griglia auto)</button>
       </div>
 
       <p class="hint">Disegna a mano griglia e lettere (la guida grigia serve solo da riferimento e non viene salvata). Il PNG esportato contiene solo i tuoi tratti neri su bianco, pronto per la pipeline OpenCV.</p>
@@ -31,6 +33,7 @@
     <script>
       const container = document.getElementById("sketchContainer");
       let pad;
+      let i = 1;
 
       function buildGrid() {
         container.innerHTML = "";
@@ -38,6 +41,7 @@
           rows: clamp(rows.value, 1, 20),
           cols: clamp(cols.value, 1, 20),
           cell: clamp(cell.value, 30, 200),
+          penWidth: clamp(pen.value, 1, 3),
         });
       }
 
@@ -45,10 +49,10 @@
         return Math.max(lo, Math.min(hi, parseInt(v) || lo));
       }
 
-      function save() {
+      function download(dataURL, suffix) {
         const a = document.createElement("a");
-        a.href = pad.toDataURL();
-        a.download = `grid_${pad.rows}x${pad.cols}_${Date.now()}.png`;
+        a.href = dataURL;
+        a.download = `grid_${pad.rows}x${pad.cols}_${suffix}_${i++}.png`;
         a.click();
       }
 
@@ -56,7 +60,8 @@
       undoBtn.onclick = () => pad.undo();
       clearBtn.onclick = () => pad.reset();
       guideBtn.onclick = () => pad.toggleGuide();
-      saveBtn.onclick = save;
+      saveBtn.onclick = () => download(pad.toDataURL(), "hand");
+      saveGridBtn.onclick = () => download(pad.toDataURLWithGrid(), "auto");
 
       buildGrid();
     </script>

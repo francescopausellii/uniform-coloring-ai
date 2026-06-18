@@ -4,26 +4,36 @@ from aima.search import Node
 
 
 def breadth_first_graph_search(problem):
-    """Breadth-first graph search with O(1) frontier lookup."""
+    """
+    BFS su grafo. Minimizza il numero di passi, non il costo totale.
+    Se i costi non sono uniformi, usare UCS.
+    """
     node = Node(problem.initial)
+
     if problem.goal_test(node.state):
+        node.nodes_expanded = 0
         return node
 
     frontier = deque([node])
-    frontier_ids = {node.state.id}  # Set for O(1) lookup
+    frontier_ids = {node.state.id}
     explored = set()
+    nodes_expanded = 0
 
     while frontier:
         node = frontier.popleft()
+        frontier_ids.discard(node.state.id)
         explored.add(node.state.id)
+        nodes_expanded += 1
 
-        # Expand node: generate all child states reachable by valid actions
         for child in node.expand(problem):
             sid = child.state.id
-            # Only process if state not yet explored or in frontier
+
             if sid not in explored and sid not in frontier_ids:
+                # goal test al momento della generazione
                 if problem.goal_test(child.state):
+                    child.nodes_expanded = nodes_expanded
                     return child
+
                 frontier.append(child)
                 frontier_ids.add(sid)
 
@@ -31,67 +41,73 @@ def breadth_first_graph_search(problem):
 
 
 def uniform_cost_search(problem):
-    """Uniform cost search with O(1) frontier lookup."""
+    """
+    UCS: espande per path_cost crescente. Ottimale.
+
+    Usa lazy deletion perché l'heap di Python non supporta aggiornamento di priorità:
+    i duplicati vengono inseriti e scartati all'estrazione se lo stato è già esplorato.
+    """
     node = Node(problem.initial)
-    # Heap: (path_cost, node_id, node). node_id breaks ties to avoid Node comparison.
-    frontier = [(0, id(node), node)]
-    frontier_ids = {node.state.id}  # Set for O(1) lookup
+
+    # (path_cost, counter, nodo) — counter monotono garantisce determinismo sui pareggi
+    counter = 0
+    frontier = [(0, counter, node)]
     explored = set()
+    nodes_expanded = 0
 
     while frontier:
-        # Pop node with lowest path cost from heap
         _, _, node = heapq.heappop(frontier)
 
-        # Skip if already explored (handles duplicate states from heap)
+        # lazy deletion: salta duplicati già esplorati con costo minore
         if node.state.id in explored:
             continue
 
         if problem.goal_test(node.state):
+            node.nodes_expanded = nodes_expanded
             return node
 
         explored.add(node.state.id)
+        nodes_expanded += 1
 
-        # Expand node: generate all child states reachable by valid actions
         for child in node.expand(problem):
-            sid = child.state.id
-            # Only process if state not yet explored or in frontier
-            if sid not in explored and sid not in frontier_ids:
-                heapq.heappush(frontier, (child.path_cost, id(child), child))
-                frontier_ids.add(sid)
+            if child.state.id not in explored:
+                counter += 1
+                heapq.heappush(frontier, (child.path_cost, counter, child))
 
     return None
 
 
 def astar_search(problem, h=None):
-    """A* search with O(1) frontier lookup."""
+    """
+    A*: espande per f(n) = g(n) + h(n). Ottimale se h è ammissibile.
+    Stesso pattern lazy deletion di UCS.
+    """
     h = h or problem.h
+
     node = Node(problem.initial)
-    f0 = node.path_cost + h(node)
-    # Heap: (f-value, node_id, node). node_id breaks ties to avoid Node comparison.
-    frontier = [(f0, id(node), node)]
-    frontier_ids = {node.state.id}  # Set for O(1) lookup
+    counter = 0
+    frontier = [(node.path_cost + h(node), counter, node)]
     explored = set()
+    nodes_expanded = 0
 
     while frontier:
-        # Pop node with lowest f-value (g + h) from heap
         _, _, node = heapq.heappop(frontier)
 
-        # Skip if already explored (handles duplicate states from heap)
+        # lazy deletion
         if node.state.id in explored:
             continue
 
         if problem.goal_test(node.state):
+            node.nodes_expanded = nodes_expanded
             return node
 
         explored.add(node.state.id)
+        nodes_expanded += 1
 
-        # Expand node: generate all child states reachable by valid actions
         for child in node.expand(problem):
-            sid = child.state.id
-            # Only process if state not yet explored or in frontier
-            if sid not in explored and sid not in frontier_ids:
+            if child.state.id not in explored:
+                counter += 1
                 f = child.path_cost + h(child)
-                heapq.heappush(frontier, (f, id(child), child))
-                frontier_ids.add(sid)
+                heapq.heappush(frontier, (f, counter, child))
 
     return None
